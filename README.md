@@ -60,6 +60,7 @@ tested and deployed independently:
 ```
 .
 ├── README.md
+├── DEMO.md                               # step-by-step demo recording guide
 ├── deploy-minikube.sh                    # Linux/macOS/Git Bash
 ├── deploy-minikube.ps1                   # Windows PowerShell
 ├── frontend/                             # React web UI (Vite) + nginx proxy, Dockerfile, k8s/
