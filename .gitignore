@@ -1,0 +1,5 @@
+# Each microservice is its own repository (see README) - not part of the umbrella repo
+event-service/
+booking-service/
+TicketHub_ClaudeCode_Prompt.md
+node_modules/
