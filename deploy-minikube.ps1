@@ -21,13 +21,15 @@ $dockerEnv | Invoke-Expression
 
 Invoke-Checked { docker build -t tickethub/event-service:1.0.0 .\event-service }
 Invoke-Checked { docker build -t tickethub/booking-service:1.0.0 .\booking-service }
+Invoke-Checked { docker build -t tickethub/frontend:1.0.0 .\frontend }
 
 Invoke-Checked { kubectl apply -f event-service\k8s\ }
 Invoke-Checked { kubectl apply -f booking-service\k8s\ }
+Invoke-Checked { kubectl apply -f frontend\k8s\ }
 
 Write-Host 'Waiting for pods to become ready...'
 Invoke-Checked { kubectl wait --for=condition=available --timeout=300s -n tickethub `
-    deployment/event-db deployment/booking-db deployment/event-service deployment/booking-service }
+    deployment/event-db deployment/booking-db deployment/event-service deployment/booking-service deployment/frontend }
 
 kubectl get all -n tickethub
 Write-Host ''
@@ -35,4 +37,5 @@ Write-Host ''
 # foreground, so open each one in its own terminal window and leave it running.
 Write-Host "Event Service URL:   run 'minikube service event-service -n tickethub --url' in a new terminal"
 Write-Host "Booking Service URL: run 'minikube service booking-service -n tickethub --url' in a new terminal"
+Write-Host "Web UI URL:          run 'minikube service frontend -n tickethub --url' in a new terminal"
 Write-Host 'Dashboard:           minikube dashboard'

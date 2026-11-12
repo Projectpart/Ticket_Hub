@@ -13,13 +13,15 @@ eval "$(minikube docker-env --shell bash)"
 
 docker build -t tickethub/event-service:1.0.0   ./event-service
 docker build -t tickethub/booking-service:1.0.0 ./booking-service
+docker build -t tickethub/frontend:1.0.0        ./frontend
 
 kubectl apply -f event-service/k8s/
 kubectl apply -f booking-service/k8s/
+kubectl apply -f frontend/k8s/
 
 echo "Waiting for pods to become ready..."
 kubectl wait --for=condition=available --timeout=300s -n tickethub \
-  deployment/event-db deployment/booking-db deployment/event-service deployment/booking-service
+  deployment/event-db deployment/booking-db deployment/event-service deployment/booking-service deployment/frontend
 
 kubectl get all -n tickethub
 echo
@@ -33,8 +35,10 @@ if [ "$TUNNEL_NEEDED" = "yes" ]; then
   # so run each in its own terminal and leave it running:
   echo "Event Service URL:   run 'minikube service event-service -n tickethub --url' in a separate terminal"
   echo "Booking Service URL: run 'minikube service booking-service -n tickethub --url' in a separate terminal"
+  echo "Web UI URL:          run 'minikube service frontend -n tickethub --url' in a separate terminal"
 else
   echo "Event Service URL:   $(minikube service event-service -n tickethub --url)"
   echo "Booking Service URL: $(minikube service booking-service -n tickethub --url)"
+  echo "Web UI URL:          $(minikube service frontend -n tickethub --url)"
 fi
 echo "Dashboard:           minikube dashboard"

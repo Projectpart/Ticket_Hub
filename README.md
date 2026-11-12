@@ -9,6 +9,7 @@ tested and deployed independently:
 |---|---|---|---|
 | Event Service | https://github.com/Projectpart/tickethub-event-service | 8081 / 30081 | `event_db` (PostgreSQL 16) |
 | Booking Service | https://github.com/Projectpart/tickethub-booking-service | 8082 / 30082 | `booking_db` (PostgreSQL 16) |
+| Web UI (React) | [`frontend/`](frontend/) in this repo | 8080 / 30080 | – |
 
 ## Architecture
 
@@ -61,6 +62,7 @@ tested and deployed independently:
 ├── README.md
 ├── deploy-minikube.sh                    # Linux/macOS/Git Bash
 ├── deploy-minikube.ps1                   # Windows PowerShell
+├── frontend/                             # React web UI (Vite) + nginx proxy, Dockerfile, k8s/
 └── postman/TicketHub.postman_collection.json
 ```
 
@@ -83,7 +85,14 @@ Get the service URLs. On Windows with the docker driver, keep each command runni
 ```bash
 minikube service event-service   -n tickethub --url
 minikube service booking-service -n tickethub --url
+minikube service frontend        -n tickethub --url   # web UI
 ```
+
+## Web UI
+
+The React frontend is in [`frontend/`](frontend/README.md). It shows events with live availability and lets you book tickets, including a simulated payment failure. It also shows each booking with its event details (API composition) and saga log, and can cancel a booking, including a simulated refund failure followed by a retry.
+
+The browser only talks to the frontend's own origin, so the services need no CORS. Calls under `/event-api/*` and `/booking-api/*` are forwarded to the services: by nginx over cluster DNS in Kubernetes, and by the Vite dev server locally.
 
 ## Test with Postman / Newman
 

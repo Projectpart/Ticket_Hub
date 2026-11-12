@@ -1,0 +1,24 @@
+# Serves the built React app and forwards API calls to the microservices.
+# ${EVENT_SERVICE_URL} / ${BOOKING_SERVICE_URL} are filled in at container start
+# (inside Kubernetes they are the cluster-DNS names of the two Services).
+server {
+    listen 8080;
+    root /usr/share/nginx/html;
+
+    location /event-api/ {
+        proxy_pass ${EVENT_SERVICE_URL}/;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_read_timeout 15s;
+    }
+
+    location /booking-api/ {
+        proxy_pass ${BOOKING_SERVICE_URL}/;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_read_timeout 30s;
+    }
+
+    location = /healthz { access_log off; return 200 'ok'; }
+
+    # Single-page app: unknown paths fall back to index.html
+    location / { try_files $uri /index.html; }
+}
