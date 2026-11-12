@@ -234,13 +234,25 @@ Invoke-RestMethod "$B/health/ready"
 $id = (Invoke-RestMethod "$B/api/v1/bookings")[0].id
 Invoke-RestMethod "$B/api/v1/bookings/$id/details" | Select-Object id,status,event,warning
 ```
-**Explain:** the Booking Service stays healthy, because readiness checks only its own database, so the outage does not cascade. The details endpoint degrades gracefully, returning `event: null` and a warning. Optionally, try a booking in the UI: **503**, the saga releases defensively, and the booking is FAILED.
+**Explain:** the Booking Service stays healthy, because readiness checks only its own database, so the outage does not cascade. The details endpoint degrades gracefully, returning `event: null` and a warning.
 
-Restore:
+Try a booking during the outage:
+```powershell
+curl.exe -s -X POST "$B/api/v1/bookings" -H "Content-Type: application/json" -d '{\"eventId\":2,\"customerName\":\"Outage\",\"customerEmail\":\"outage@demo.com\",\"quantity\":1}'
+```
+**Explain:** the result is **503 EVENT_SERVICE_UNAVAILABLE**. The reservation outcome is unknown, so the saga tries a defensive release. That fails too, and the booking stays **COMPENSATING**.
+
+Restore the Event Service:
 ```powershell
 kubectl scale deployment event-service -n tickethub --replicas=2
 kubectl rollout status deployment/event-service -n tickethub
 ```
+Wait about 30 s for the recovery job, then show the outage booking's saga log:
+```powershell
+$o = curl.exe -s "$B/api/v1/bookings?customerEmail=outage@demo.com" | ConvertFrom-Json
+(Invoke-RestMethod "$B/api/v1/bookings/$($o[0].id)/saga").steps | Format-Table sagaType,step,status
+```
+**Explain:** the log reads `RESERVE_TICKETS FAILED` → `RELEASE_TICKETS COMPENSATION_FAILED` → `RECOVERY_STARTED` → `RELEASE_TICKETS COMPENSATED` → `MARK_FAILED`. After the outage, the background recovery job completed the compensation automatically.
 
 ---
 
